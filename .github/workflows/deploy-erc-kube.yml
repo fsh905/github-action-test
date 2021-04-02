@@ -1,20 +1,23 @@
 name: learn-github-actions
 on: [push]
 jobs:
-  testAndBuild:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: test and build
+      - name: test
         uses: cedrickring/golang-action@1.6.0
         with:
-          args: make test && make build
-          path: build/
+          args: make test
   docker:
-    needs: testAndBuild
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: build
+        uses: cedrickring/golang-action@1.6.0
+        with:
+          args: make build
       # config aws account
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -34,5 +37,6 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           cat Dockerfile
+          ls -alh
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
